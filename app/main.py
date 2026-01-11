@@ -4,26 +4,24 @@ import os
 def move_file(command: str) -> None:
     parts = command.split()
     if len(parts) != 3 or parts[0] != "mv":
-        raise ValueError("Invalid command format.")
+        return
 
-    source_path = parts[1]
-    if not os.path.exists(source_path):
-        raise FileNotFoundError("Source file does not exist")
-    if not os.path.isfile(source_path):
-        raise ValueError("Source is not a file")
+    _, source_path, destination_path = parts
 
-    destination_path = parts[2]
+    with open(source_path, "r") as source_file:
+        content = source_file.read()
+
     if destination_path.endswith("/"):
-        destination_path = os.path.join(destination_path,
-                                        os.path.basename(source_path))
+        os.makedirs(destination_path, exist_ok=True)
+        destination_full_path = os.path.join(destination_path,
+                                             os.path.basename(source_path))
+    else:
+        destination_dir = os.path.dirname(destination_path)
+        if destination_dir:
+            os.makedirs(destination_dir, exist_ok=True)
+        destination_full_path = destination_path
 
-    destination_dir = os.path.dirname(destination_path)
-    if destination_dir and not os.path.exists(destination_dir):
-        os.makedirs(os.path.dirname(destination_path), exist_ok=True)
+    with open(destination_full_path, "w") as new_file:
+        new_file.write(content)
 
-    with (
-        open(destination_path, "w") as destination_file,
-        open(source_path, "r") as source_file
-    ):
-        destination_file.write(source_file.read())
     os.remove(source_path)
